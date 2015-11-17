@@ -13,14 +13,13 @@
 package org.cloudfoundry.identity.uaa.authentication.login;
 
 import org.cloudfoundry.identity.uaa.authentication.AuthzAuthenticationRequest;
-import org.cloudfoundry.identity.uaa.authentication.Origin;
 import org.cloudfoundry.identity.uaa.authentication.UaaAuthentication;
 import org.cloudfoundry.identity.uaa.authentication.UaaPrincipal;
 import org.cloudfoundry.identity.uaa.client.ClientConstants;
-import org.cloudfoundry.identity.uaa.client.SocialClientUserDetails;
 import org.cloudfoundry.identity.uaa.codestore.ExpiringCode;
 import org.cloudfoundry.identity.uaa.codestore.ExpiringCodeStore;
 import org.cloudfoundry.identity.uaa.codestore.ExpiringCodeType;
+import org.cloudfoundry.identity.uaa.constants.OriginKeys;
 import org.cloudfoundry.identity.uaa.login.AutologinRequest;
 import org.cloudfoundry.identity.uaa.login.AutologinResponse;
 import org.cloudfoundry.identity.uaa.login.PasscodeInformation;
@@ -28,7 +27,6 @@ import org.cloudfoundry.identity.uaa.login.saml.LoginSamlAuthenticationToken;
 import org.cloudfoundry.identity.uaa.login.saml.SamlIdentityProviderConfigurator;
 import org.cloudfoundry.identity.uaa.login.saml.SamlIdentityProviderDefinition;
 import org.cloudfoundry.identity.uaa.login.saml.SamlRedirectUtils;
-import org.cloudfoundry.identity.uaa.user.UaaAuthority;
 import org.cloudfoundry.identity.uaa.util.JsonUtils;
 import org.cloudfoundry.identity.uaa.util.UaaStringUtils;
 import org.cloudfoundry.identity.uaa.zone.IdentityZoneHolder;
@@ -49,7 +47,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -84,7 +81,7 @@ import java.util.Properties;
 @Controller
 public class LoginInfoEndpoint {
 
-    public static final String NotANumber = Origin.NotANumber;
+    public static final String NotANumber = OriginKeys.NotANumber;
     public static final String CREATE_ACCOUNT_LINK = "createAccountLink";
     public static final String FORGOT_PASSWORD_LINK = "forgotPasswordLink";
     public static final String LINK_CREATE_ACCOUNT_SHOW = "linkCreateAccountShow";
@@ -229,9 +226,9 @@ public class LoginInfoEndpoint {
         boolean fieldUsernameShow = true;
 
         if (allowedIdps==null ||
-            allowedIdps.contains(Origin.LDAP) ||
-            allowedIdps.contains(Origin.UAA) ||
-            allowedIdps.contains(Origin.KEYSTONE)) {
+            allowedIdps.contains(OriginKeys.LDAP) ||
+            allowedIdps.contains(OriginKeys.UAA) ||
+            allowedIdps.contains(OriginKeys.KEYSTONE)) {
             fieldUsernameShow = true;
         } else if (idps!=null && idps.size()==1) {
             String url = SamlRedirectUtils.getIdpRedirectUrl(idps.get(0), entityID);
@@ -240,7 +237,7 @@ public class LoginInfoEndpoint {
             fieldUsernameShow = false;
         }
         boolean linkCreateAccountShow = fieldUsernameShow;
-        if (fieldUsernameShow && (allowedIdps!=null && !allowedIdps.contains(Origin.UAA))) {
+        if (fieldUsernameShow && (allowedIdps!=null && !allowedIdps.contains(OriginKeys.UAA))) {
             linkCreateAccountShow = false;
         }
         String zonifiedEntityID = getZonifiedEntityId();
@@ -381,7 +378,7 @@ public class LoginInfoEndpoint {
             UaaPrincipal p = (UaaPrincipal)userAuthentication.getPrincipal();
             if (p!=null) {
                 codeData.put("user_id", p.getId());
-                codeData.put(Origin.ORIGIN, p.getOrigin());
+                codeData.put(OriginKeys.ORIGIN, p.getOrigin());
             }
         }
         ExpiringCode expiringCode = expiringCodeStore.generateCode(JsonUtils.writeValueAsString(codeData), new Timestamp(System.currentTimeMillis() + 5 * 60 * 1000));
@@ -445,8 +442,8 @@ public class LoginInfoEndpoint {
 
     protected Map<String, ?> getLinksInfo() {
         Map<String, Object> model = new HashMap<>();
-        model.put(Origin.UAA, getUaaBaseUrl());
-        model.put("login", getUaaBaseUrl().replaceAll(Origin.UAA, "login"));
+        model.put(OriginKeys.UAA, getUaaBaseUrl());
+        model.put("login", getUaaBaseUrl().replaceAll(OriginKeys.UAA, "login"));
         if (selfServiceLinksEnabled && !disableInternalUserManagement) {
             model.put(CREATE_ACCOUNT_LINK, "/create_account");
             model.put(FORGOT_PASSWORD_LINK, "/forgot_password");
