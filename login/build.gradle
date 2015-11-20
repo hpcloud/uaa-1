@@ -1,4 +1,5 @@
 Project identityCommon = parent.subprojects.find { it.name.equals('cloudfoundry-identity-common') }
+Project identityPayload = parent.subprojects.find { it.name.equals('cloudfoundry-identity-payload') }
 Project identityScim = parent.subprojects.find { it.name.equals('cloudfoundry-identity-scim') }
 
 description = 'CloudFoundry Identity Login'
@@ -14,6 +15,8 @@ dependencies {
   compile group: 'org.springframework', name: 'spring-context-support', version:springVersion
   provided group: 'javax.servlet', name: 'javax.servlet-api', version:'3.0.1'
 
+  testCompile identityPayload.configurations.testCompile.dependencies
+  testCompile identityPayload.sourceSets.test.output
   testCompile identityCommon.configurations.testCompile.dependencies
   testCompile identityCommon.sourceSets.test.output
 
