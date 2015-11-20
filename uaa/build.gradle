@@ -1,4 +1,4 @@
-Project identityPayload = parent.subprojects.find { it.name.equals('cloudfoundry-identity-common') }
+Project identityPayload = parent.subprojects.find { it.name.equals('cloudfoundry-identity-payload') }
 Project identityCommon = parent.subprojects.find { it.name.equals('cloudfoundry-identity-common') }
 Project identityScim = parent.subprojects.find { it.name.equals('cloudfoundry-identity-scim') }
 Project identityLogin = parent.subprojects.find { it.name.equals('cloudfoundry-identity-login') }
@@ -18,15 +18,18 @@ war {
 }
 apply plugin: 'eclipse-wtp'
 eclipse {
-	wtp {
-	    component {
-	      contextPath = 'uaa'
-	    }
-	}
+  wtp {
+      component {
+        contextPath = 'uaa'
+      }
+  }
 }
 
 description = 'UAA'
 dependencies {
+  compile(identityPayload) {
+    exclude(module: 'jna')
+  }
   compile(identityCommon) {
     exclude(module: 'jna')
   }
@@ -45,6 +48,8 @@ dependencies {
   runtime group: 'javax.servlet', name: 'jstl', version:'1.2'
   runtime group: 'postgresql', name: 'postgresql', version:parent.postgresqlVersion
 
+  testCompile identityPayload.configurations.testCompile.dependencies
+  testCompile identityPayload.sourceSets.test.output
   testCompile identityCommon.configurations.testCompile.dependencies
   testCompile identityCommon.sourceSets.test.output
   testCompile identityScim.sourceSets.test.output
@@ -72,7 +77,7 @@ dependencies {
 }
 
 test {
-  dependsOn identityCommon.instrumentedJar, identityScim.instrumentedJar, identityLogin.instrumentedJar
+  dependsOn identityPayload.instrumentedJar, identityCommon.instrumentedJar, identityScim.instrumentedJar, identityLogin.instrumentedJar
   exclude 'org/cloudfoundry/identity/uaa/integration/*.class'
   exclude '**/*IT.class'
   systemProperty "mock.suite.test", "true"
@@ -90,7 +95,8 @@ task integrationTest(type: Test) {
 }
 
 task instrumentedWar(type: War, dependsOn: instrument) {
-  dependsOn identityCommon.tasks.findByName('instrumentedJar'),
+  dependsOn identityPayload.tasks.findByName('instrumentedJar'),
+            identityCommon.tasks.findByName('instrumentedJar'),
             identityScim.tasks.findByName('instrumentedJar'),
             identityLogin.tasks.findByName('instrumentedJar')
 
